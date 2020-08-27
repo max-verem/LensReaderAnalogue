@@ -1,0 +1,24 @@
+{
+	"FileVersion": 3,
+	"Version": 1,
+	"VersionName": "1.0",
+	"FriendlyName": "LensReaderAnalogueLiveLink",
+	"Description": "Lens's zoom/focus reader",
+	"Category": "Other",
+	"CreatedBy": "Maksym Veremeyenko",
+	"CreatedByURL": "",
+	"DocsURL": "",
+	"MarketplaceURL": "",
+	"SupportURL": "",
+	"CanContainContent": true,
+	"IsBetaVersion": false,
+	"IsExperimentalVersion": false,
+	"Installed": false,
+	"Modules": [
+		{
+			"Name": "LensReaderAnalogueLiveLink",
+			"Type": "Runtime",
+			"LoadingPhase": "Default"
+		}
+	]
+}
