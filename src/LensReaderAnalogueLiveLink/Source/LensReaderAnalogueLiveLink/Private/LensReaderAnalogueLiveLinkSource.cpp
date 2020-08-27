@@ -30,8 +30,8 @@ FLensReaderAnalogueLiveLinkSource::FLensReaderAnalogueLiveLinkSource(FText InEnd
 	DeviceEndpoint = InEndpoint;
 
 	SourceStatus = LOCTEXT("SourceStatus_DeviceNotFound", "Device Not Found");
-	SourceType = LOCTEXT("LensReaderAnalogueLiveLinkSource", "LensReaderAnalogue LiveLink");
-    SourceMachineName = DeviceEndpoint; // LOCTEXT("LensReaderAnalogueLiveLinkSourceMachineName", "DeviceEndpoint");
+    SourceType = LOCTEXT("LensReaderAnalogueLiveLinkSource", "Lens Reader Analogue");
+    SourceMachineName = DeviceEndpoint;
 
     Start();
 

@@ -6,7 +6,7 @@
 
 FText ULensReaderAnalogueLiveLinkSourceFactory::GetSourceDisplayName() const
 {
-    return LOCTEXT("SourceDisplayName", "LensReaderAnalogue LiveLink");
+    return LOCTEXT("SourceDisplayName", "Lens Reader Analogue");
 }
 
 FText ULensReaderAnalogueLiveLinkSourceFactory::GetSourceTooltip() const

@@ -29,7 +29,7 @@ void LensReaderAnalogueLiveLinkSourceEditor::Construct(const FArguments& Args)
 				.FillWidth(0.25f)
 				[
 					SNew(STextBlock)
-					.Text(LOCTEXT("LensReaderAnalogueAddress", "LensReaderAnalogue address"))
+					.Text(LOCTEXT("LensReaderAnalogueAddress", "host address"))
 				]
 				+ SHorizontalBox::Slot()
 				.HAlign(HAlign_Fill)
