@@ -85,7 +85,7 @@ static DWORD WINAPI reader_thread_proc(CONST LPVOID lpParam)
                         if (r1 > 0 && r2 > 0)
                         {
                             EnterCriticalSection(&current_data.lock);
-                            current_data.vals[0] = r1;
+                            current_data.vals[0] = r1 * 0.9 + current_data.vals[0] * 0.1;
                             current_data.vals[1] = r2;
                             current_data.cnt++;
                             vrpn_gettimeofday(&current_data.tv, NULL);
