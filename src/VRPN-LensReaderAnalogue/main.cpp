@@ -10,13 +10,18 @@
 
 HANDLE serial;
 
+#define FOCUS_EXP_FILTER_RATIO 0.1
+#define ZOOM_EXP_FILTER_RATIO 0.1
+#define SENSORS_NUM 6
+#define SENSORS_DEEP 6
+
 #define TMP_BUF_SIZE 1024
 
 typedef struct current_data_ctx
 {
     CONDITION_VARIABLE cond;
     CRITICAL_SECTION lock;
-    int vals[2];
+    double vals[SENSORS_NUM][SENSORS_DEEP];
     struct timeval tv;
     int cnt;
 } current_data_desc;
@@ -84,9 +89,35 @@ static DWORD WINAPI reader_thread_proc(CONST LPVOID lpParam)
                     {
                         if (r1 > 0 && r2 > 0)
                         {
+                            int i, j;
+
                             EnterCriticalSection(&current_data.lock);
-                            current_data.vals[0] = r1 * 0.9 + current_data.vals[0] * 0.1;
-                            current_data.vals[1] = r2;
+
+                            /* shift sensors window */
+                            for(i = 0; i < SENSORS_NUM; i++)
+                            for (j = SENSORS_DEEP - 1; j > 0; j--)
+                                current_data.vals[i][j] = current_data.vals[i][j - 1];
+
+                            /* save current value */
+                            current_data.vals[0][0] = current_data.vals[2][0] = current_data.vals[4][0] = r1;
+                            current_data.vals[1][0] = current_data.vals[3][0] = current_data.vals[5][0] = r2;
+
+                            /* do simple filtering for second pair */
+#ifdef ZOOM_EXP_FILTER_RATIO
+                            current_data.vals[2][0] = current_data.vals[4][0] * FOCUS_EXP_FILTER_RATIO + current_data.vals[2][1] * (1.0 - ZOOM_EXP_FILTER_RATIO);
+#else
+                            for (current_data.vals[2][0] = 0, j = 0; j < SENSORS_DEEP; j++)
+                                current_data.vals[2][0] += current_data.vals[4][j];
+                            current_data.vals[2][0] /= SENSORS_DEEP;
+#endif
+#ifdef FOCUS_EXP_FILTER_RATIO
+                            current_data.vals[3][0] = current_data.vals[5][0] * ZOOM_EXP_FILTER_RATIO + current_data.vals[3][1] * (1.0 - FOCUS_EXP_FILTER_RATIO);
+#else
+                            for (current_data.vals[3][0] = 0, j = 0; j < SENSORS_DEEP; j++)
+                                current_data.vals[3][0] += current_data.vals[5][j];
+                            current_data.vals[3][0] /= SENSORS_DEEP;
+#endif
+
                             current_data.cnt++;
                             vrpn_gettimeofday(&current_data.tv, NULL);
                             WakeConditionVariable(&current_data.cond);
@@ -110,7 +141,7 @@ static DWORD WINAPI reader_thread_proc(CONST LPVOID lpParam)
     return 0;
 }
 
-#define VRPN_ANALOGUE_CHANNELS 4
+#define VRPN_ANALOGUE_CHANNELS SENSORS_NUM
 
 class LensReaderAnalogue : public vrpn_Analog
 {
@@ -250,10 +281,6 @@ int main(int argc, char** argv)
     InitializeConditionVariable(&current_data.cond);
     InitializeCriticalSection(&current_data.lock);
 
-    /* setup default data */
-    current_data.vals[0] = atoi(argv[3]);
-    current_data.vals[1] = 0;
-
     /* create VRPN connection */
     snprintf(buf, sizeof(buf), ":%s", argv[1]);
     vrpn_Connection *conn = vrpn_create_server_connection(buf);
@@ -288,10 +315,17 @@ int main(int argc, char** argv)
 
         if (r = current_data.cnt)
         {
-            sensor[0] = zoom_real_1 + (zoom_real_2 - zoom_real_1) / (zoom_raw_2 - zoom_raw_1) * (current_data.vals[0] - zoom_raw_1);
-            sensor[1] = current_data.vals[1];
-            sensor[2] = current_data.vals[0];
-            sensor[3] = current_data.vals[1];
+            /* first pair is recalculated value */
+            sensor[0] = zoom_real_1 + (zoom_real_2 - zoom_real_1) / (zoom_raw_2 - zoom_raw_1) * (current_data.vals[2][0] - zoom_raw_1);
+            sensor[1] = current_data.vals[3][0];
+
+            /* second pair - filtered raw values */
+            sensor[2] = current_data.vals[2][0];
+            sensor[3] = current_data.vals[3][0];
+
+            /* third pair - original raw values */
+            sensor[4] = current_data.vals[4][0];
+            sensor[5] = current_data.vals[5][0];
 
             vrpn->update(sensor, tv = current_data.tv);
 
@@ -304,9 +338,10 @@ int main(int argc, char** argv)
         conn->mainloop();
 
         if (r)
-            printf("%8d.%04d | Zoom: raw=%5.1f target=%5.4f | Focus: raw=%5.1f target=%5.4f\r",
+            printf("%8d.%04d | Zoom: trg=%5.4f flt=%5.4f raw=%5.4f | Focus: trg=%5.4f flt=%5.4f raw=%5.4f\r",
                 tv.tv_sec, tv.tv_usec / 1000,
-                sensor[0], sensor[1], sensor[2], sensor[3]);
+                sensor[0], sensor[2], sensor[4],
+                sensor[1], sensor[3], sensor[5]);
 
         EnterCriticalSection(&current_data.lock);
     }
