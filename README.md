@@ -8,7 +8,7 @@ This project is used to bind Lens with analogue output (like ) with Unreal Engin
 
 ![Cable for connecting with PC](/schematic/module_to_pc.png?raw=true "Cable for connecting with PC")
 
-![Cable for connecting with LENS](/schematic/module_to_pc.png?raw=true "Cable for connecting with LENS")
+![Cable for connecting with LENS](/schematic/module_to_lens.png?raw=true "Cable for connecting with LENS")
 
 ## Device photo
 
